@@ -133,6 +133,9 @@ python legged_gym/scripts/play.py --task g1_${terrain} --checkpoint_path ${/path
 We also provide the evaluation scripts to record success rate, feet movement distance, motion smoothness, and consumed energy:
 ```bash
 python legged_gym/scripts/eval/eval_${terrain}.py --task g1_${terrain} --checkpoint_path ${/path/to/ckpt.pt} # [ground, platform, slope, wall]
+
+# 评测g1_platform
+python legged_gym/scripts/eval/eval_platform.py --task g1_platform --checkpoint_path logs/g1_platform/Aug01_03-57-52_test_g1/model_30000.pt --num_envs=10
 ```
 Domain randomization is applied during the evaluation to make the results more generalizable. 
 

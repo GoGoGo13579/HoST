@@ -174,4 +174,8 @@ cython_debug/
 .pypirc
 
 
-logs/
+legged_gym/logs/
+
+legged_gym/deploy/deploy_mujoco/g1_ground/models/
+
+isaacgym/

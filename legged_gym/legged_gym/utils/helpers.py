@@ -164,6 +164,65 @@ def export_policy_as_jit(actor_critic, path):
         traced_script_module.save(path)
 
 
+def export_policy_as_onnx(actor_critic, path, obs_size, exported_policy_name="policy_1.onnx"):
+    """Export policy as ONNX model for deployment"""
+    import torch.nn as nn
+    
+    os.makedirs(path, exist_ok=True)
+    onnx_path = os.path.join(path, exported_policy_name)
+    
+    # Create inference model dictionary (similar to the reference code structure)
+    inference_model = {'actor': actor_critic.actor}
+    
+    # Create example observation
+    example_obs = torch.randn(1, obs_size)
+    example_obs_dict = {"actor_obs": example_obs}
+    
+    actor = copy.deepcopy(inference_model['actor']).to('cpu')
+
+    class PPOWrapper(nn.Module):
+        def __init__(self, actor):
+            """
+            Wrapper for PPO actor model to handle ONNX export
+            """
+            super(PPOWrapper, self).__init__()
+            self.actor = actor
+
+        def forward(self, actor_obs):
+            """
+            Forward pass for ONNX export
+            """
+            if hasattr(self.actor, 'act_inference'):
+                return self.actor.act_inference(actor_obs)
+            else:
+                # Fallback to regular forward pass if act_inference doesn't exist
+                return self.actor(actor_obs)
+
+    wrapper = PPOWrapper(actor)
+    example_input_list = example_obs_dict["actor_obs"]
+    
+    # Set to evaluation mode
+    wrapper.eval()
+    
+    torch.onnx.export(
+        wrapper,
+        example_input_list,
+        onnx_path,
+        verbose=True,
+        input_names=["actor_obs"],
+        output_names=["action"],
+        export_params=True,
+        opset_version=13,
+        do_constant_folding=True,
+        dynamic_axes={
+            'actor_obs': {0: 'batch_size'},
+            'action': {0: 'batch_size'}
+        }
+    )
+    
+    print(f'Exported policy as ONNX model to: {onnx_path}')
+
+
 class PolicyExporterLSTM(torch.nn.Module):
     def __init__(self, actor_critic):
         super().__init__()

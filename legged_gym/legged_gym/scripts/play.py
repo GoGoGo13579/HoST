@@ -4,7 +4,7 @@ import os
 
 import isaacgym
 from legged_gym.envs import *
-from legged_gym.utils import  get_args, export_policy_as_jit, task_registry, Logger
+from legged_gym.utils import  get_args, export_policy_as_jit, export_policy_as_onnx, task_registry, Logger
 
 import torch
 import time
@@ -13,6 +13,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from collections import defaultdict
 from multiprocessing import Process, Value
+
+# Set to True to export policy
+EXPORT_POLICY = True
 
 
 def play(args):
@@ -35,6 +38,25 @@ def play(args):
     policy = ppo_runner.get_inference_policy(device=env.device)
     
     logger = Logger(env.dt)
+    
+    # export policy as a jit module (used to run it from C++)
+    if EXPORT_POLICY:
+        path = os.path.join(LEGGED_GYM_ROOT_DIR, 'logs', train_cfg.runner.experiment_name, 'exported', 'policies')
+        # export policy as ONNX model (for deployment)
+        obs_size = env.num_obs
+        # Extract training step number from checkpoint path
+        checkpoint_step = "unknown"
+        if hasattr(args, 'checkpoint_path') and args.checkpoint_path:
+            import re
+            # Extract number from model_XXXX.pt pattern
+            match = re.search(r'model_(\d+)\.pt', args.checkpoint_path)
+            if match:
+                checkpoint_step = match.group(1)
+        
+        exported_policy_name = f"policy_{args.task}_{checkpoint_step}.onnx"
+        export_policy_as_onnx(ppo_runner.alg.actor_critic, path, obs_size, exported_policy_name)
+        print('Exported policy as ONNX model to: ', path)
+    
     for i in range(10*int(env.max_episode_length)):
 
         result = env.gym.fetch_results(env.sim, True)
