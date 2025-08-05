@@ -231,7 +231,7 @@ class G1Cfg( LeggedRobotCfg ):
             # style reward
             style_waist_deviation = -10
             style_hip_yaw_deviation = -10
-            style_hip_roll_deviation = -10
+            style_hip_roll_deviation = -30
             style_shoulder_roll_deviation = -2.5
             style_left_foot_displacement = 2.5
             style_right_foot_displacement = 2.5

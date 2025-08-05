@@ -39,12 +39,12 @@ python -c "import torch; print(f'PyTorch版本: {torch.__version__}, CUDA可用:
 
 ### 训练
 ```bash
-python legged_gym/scripts/train.py --task g1_ground --run_name test_g1 --headless --num_envs=4096 # [ground, platform, slope, wall]
+python legged_gym/legged_gym/scripts/train.py --task g1_ground --run_name test_g1 --headless --num_envs=1 # [ground, platform, slope, wall]
 ```
 
 ### 推理
 ```bash
-python legged_gym/legged_gym/scripts/play.py --task g1_ground --num_envs 128 --checkpoint_path legged_gym/logs/g1_ground/Jul27_13-40-19_test_g1/model_12000.pt 
+python legged_gym/legged_gym/scripts/play.py --task g1_ground --num_envs 64 --checkpoint_path legged_gym/logs/g1_ground/Aug05_10-11-30_test_g1/model_12000.pt
 ```
 ### 评估
 ```bash

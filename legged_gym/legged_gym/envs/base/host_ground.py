@@ -1182,8 +1182,8 @@ class LeggedRobot(BaseTask):
         left_foot_pos = self.rigid_body_states[:, self.left_foot_indices, :3].clone()
         right_foot_pos = self.rigid_body_states[:, self.right_foot_indices, :3].clone()
         feet_distances = torch.norm(left_foot_pos - right_foot_pos, dim=-1)
-        # reward = tolerance(feet_distances, [0, 0.4], 0.38, 0.05)
-        return (feet_distances > 0.9).squeeze(1)
+        reward = tolerance(feet_distances, [0, 0.25], 0.25, 0.01)
+        return (feet_distances > 0.5).squeeze(1)
 
     def _reward_style_ang_vel_xy(self):
         # Penalize xy axes base angular velocity

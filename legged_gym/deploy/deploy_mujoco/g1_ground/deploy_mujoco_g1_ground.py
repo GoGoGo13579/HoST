@@ -84,7 +84,7 @@ def main():
     parser.add_argument('--model_path', type=str, default=None, 
                        help='ONNX模型文件路径')
     parser.add_argument('--config', type=str, 
-                       default='/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_ground/g1_ground_config.yaml',
+                       default='/home/shenlan/zzy_ws/HoST/legged_gym/deploy/deploy_mujoco/g1_ground/g1_ground_config.yaml',
                        help='配置文件路径')
     args = parser.parse_args()
     
@@ -188,8 +188,9 @@ def main():
                 if policy_started:
                     obs_input = obs_history.flatten().reshape(1, -1)
                     # obs_input = np.flip(obs_input, axis=1)
-                    policy_output = ort_session.run(None, {'actor_obs': obs_input})
-                    actions = policy_output[0].flatten()
+                    # 运行推理
+                    policy_output = ort_session.run(None, {'input': obs_input})
+                    actions = policy_output[0].flatten()  # 移除批次维度
                 else:
                     actions = np.zeros(num_joints, dtype=np.float32)
                 

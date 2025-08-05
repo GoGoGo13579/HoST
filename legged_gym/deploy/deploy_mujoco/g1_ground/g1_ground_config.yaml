@@ -1,6 +1,6 @@
 # G1 Ground Deployment Configuration
 simulation:
-  xml_path: "/home/shenlan/HoST/legged_gym/resources/robots/g1/g1_23dof.xml"
+  xml_path: "/home/shenlan/zzy_ws/HoST/legged_gym/resources/robots/g1/g1_29dof_anneal_23dof.xml"
   simulation_dt: 0.002
   control_decimation: 10
 
@@ -22,12 +22,26 @@ observation_scales:
 # 控制参数 (23个关节的直接数组)
 control:
   control_type: 'P'       # PD控制类型
-  action_scale: 0.3       # 动作缩放
+  action_scale: 0.25       # 动作缩放
   
-  # 刚度参数数组 [N*m/rad]，顺序: 左腿(6)+右腿(6)+躯干(1)+左臂(5)+右臂(5)
+  # # 刚度参数数组 [N*m/rad]，顺序: 左腿(6)+右腿(6)+躯干(1)+左臂(5)+右臂(5)
+  # kp: [150, 150, 150, 200, 40, 40,
+  #      150, 150, 150, 200, 40, 40,
+  #      100,  # 修改为与训练配置一致
+  #      100, 100, 100, 100, 100,
+  #      100, 100, 100, 100, 100]
+
+  # # 阻尼参数数组 [N*m*s/rad]，顺序同上
+  # kd: [4, 4, 4, 6, 2, 2,
+  #      4, 4, 4, 6, 2, 2,
+  #      4, 
+  #      4, 4, 4, 4, 4,
+  #      4, 4, 4, 4, 4]
+
+    # 刚度参数数组 [N*m/rad]，顺序: 左腿(6)+右腿(6)+躯干(1)+左臂(5)+右臂(5)
   kp: [150, 150, 150, 200, 40, 40,
        150, 150, 150, 200, 40, 40,
-       200, 
+       100,  # 修改为与训练配置一致
        100, 100, 100, 100, 100,
        100, 100, 100, 100, 100]
 
@@ -39,14 +53,17 @@ control:
        4, 4, 4, 4, 4]
 
 model:
-  default_model_path: "/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_ground/models/policy_g1_ground_12000.onnx"
-  
-# Initial position (standing)
+  # default_model_path: "/home/shenlan/zzy_ws/HoST/legged_gym/deploy/deploy_mujoco/g1_ground/models/ground_Jan20_00-39-48_test_elbow0_g1_ground_150_200_0.25.onnx"
+  default_model_path: "/home/shenlan/zzy_ws/HoST/legged_gym/deploy/deploy_mujoco/g1_ground/models/ground_Jan22_07-22-54_test_noKnee_feetparallel1_1520_0.25_v0.onnx"
+  # default_model_path: "/home/shenlan/zzy_ws/HoST/legged_gym/deploy/deploy_mujoco/g1_ground/models/0322_prone1(1).onnx"
+  # default_model_path: "/home/shenlan/zzy_ws/HoST/legged_gym/deploy/deploy_mujoco/g1_ground/models/0322_prone2(1).onnx"
+  # default_model_path: "/home/shenlan/zzy_ws/HoST/legged_gym/deploy/deploy_mujoco/g1_ground/models/policy_g1_ground_12000.onnx"
+# Initial position (standing) - 按照MuJoCo中的实际关节顺序
 initial_pose:
   position: [0.0, 0.0, 0.5]  # x, y, z
   orientation: [0.0, 1.0, 0.0, 1.0]  # w, x, y, z quaternion
-  joint_angles: [0.0, 0.0, -0.2, 0.4, -0.2, 0.0,  # left leg
-                 0.0, 0.0, -0.2, 0.4, -0.2, 0.0,  # right leg
-                 0.0, 0.0, 0.0, 0.0,              # torso
-                 0.0, 0.0, 0.0,                   # left arm
-                 0.0, 0.0, 0.0, 0.0]              # right arm
+  joint_angles: [-0.1, 0.0, 0.0, 0.3, -0.2, 0.0,  # left leg (hip_pitch, hip_roll, hip_yaw, knee, ankle_pitch, ankle_roll)
+                 -0.1, 0.0, 0.0, 0.3, -0.2, 0.0,  # right leg (hip_pitch, hip_roll, hip_yaw, knee, ankle_pitch, ankle_roll)
+                 0.0,                                # waist_yaw
+                 0.0, 0.3, 0.0, 0.0, 0.0,          # left arm (shoulder_pitch, shoulder_roll, shoulder_yaw, elbow, wrist_roll)
+                 0.0, -0.3, 0.0, 0.0, 0.0]         # right arm (shoulder_pitch, shoulder_roll, shoulder_yaw, elbow, wrist_roll)
