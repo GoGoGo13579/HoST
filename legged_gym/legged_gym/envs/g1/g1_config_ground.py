@@ -262,7 +262,8 @@ class G1Cfg( LeggedRobotCfg ):
         payload_mass_range = [-2, 5]
 
         randomize_com_displacement = use_random
-        com_displacement_range = [-0.03, 0.03]
+        # com_displacement_range = [-0.03, 0.03]
+        com_displacement_range = [-0.05, 0.05]
 
         randomize_link_mass = use_random
         link_mass_range = [0.8, 1.2]
@@ -283,7 +284,7 @@ class G1Cfg( LeggedRobotCfg ):
         initial_joint_pos_scale = [0.9, 1.1]
         initial_joint_pos_offset = [-0.1, 0.1]
         
-        push_robots = False
+        push_robots = True
         push_interval_s = 10
         max_push_vel_xy = 0.5
 

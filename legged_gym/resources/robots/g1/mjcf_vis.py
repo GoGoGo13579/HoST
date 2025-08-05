@@ -4,7 +4,7 @@ import time
 import os
 
 # 1. 指定MJCF模型文件路径
-mjcf_file = "/home/shenlan/HoST/legged_gym/resources/robots/g1/g1_23dof.xml"  # 替换为你的MJCF文件路径
+mjcf_file = "/home/shenlan/HoST/legged_gym/resources/robots/g1/g1_12dof.xml"  # 替换为你的MJCF文件路径
 
 # 2. 检查文件是否存在
 if not os.path.isfile(mjcf_file):

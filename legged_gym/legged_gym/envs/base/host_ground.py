@@ -1182,7 +1182,7 @@ class LeggedRobot(BaseTask):
         left_foot_pos = self.rigid_body_states[:, self.left_foot_indices, :3].clone()
         right_foot_pos = self.rigid_body_states[:, self.right_foot_indices, :3].clone()
         feet_distances = torch.norm(left_foot_pos - right_foot_pos, dim=-1)
-        reward = tolerance(feet_distances, [0, 0.4], 0.38, 0.05)
+        # reward = tolerance(feet_distances, [0, 0.4], 0.38, 0.05)
         return (feet_distances > 0.9).squeeze(1)
 
     def _reward_style_ang_vel_xy(self):
@@ -1198,10 +1198,12 @@ class LeggedRobot(BaseTask):
  
     def _reward_lin_vel_xy(self):
         # Penalize z axis base linear velocity
+        # 这里应该是惩罚x和y轴的速度
         base_height = self.root_states[:, 2] > self.cfg.rewards.target_base_height_phase3
         return torch.exp(torch.sum(torch.square(self.base_lin_vel[:, :2]), dim=1) * -5) * base_height
 
     def _reward_feet_height_var(self):
+        # 惩罚两脚的高度差过大
         left_foot_height = self.rigid_body_states[:, self.left_foot_indices, 2].clone() * 10
         right_foot_height = self.rigid_body_states[:, self.right_foot_indices, 2].clone() * 10
         feet_distance = torch.abs(left_foot_height - right_foot_height).squeeze(1).clamp(0.2, np.inf)
@@ -1209,6 +1211,7 @@ class LeggedRobot(BaseTask):
         return torch.exp(feet_distance * -2) * standup
     
     def _reward_target_upper_dof_pos(self):
+        # 惩罚上肢关节位置与目标位置的偏差
         mse = torch.sum(torch.square(self.dof_pos[:, self.upper_body_joint_indices] - self.target_dof_pos[:, self.upper_body_joint_indices]), dim=-1)
         standup =self.root_states[:, 2] > self.cfg.rewards.target_base_height_phase3
         reward = torch.exp(mse * self.cfg.rewards.target_dof_pos_sigma) 
@@ -1217,6 +1220,7 @@ class LeggedRobot(BaseTask):
     
     def _reward_target_orientation(self):
         # Penalize non flat base orientation
+        # 鼓励竖直站立
         standup  = self.root_states[:, 2] > self.cfg.rewards.target_base_height_phase3
         return torch.exp(torch.sum(torch.square(self.projected_gravity[:, :2]), dim=1) * -5) * standup
 
