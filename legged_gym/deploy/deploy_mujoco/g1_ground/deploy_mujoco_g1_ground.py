@@ -121,6 +121,13 @@ def main():
     # 控制参数
     kp = config['control']['kp']
     kd = config['control']['kd']
+    
+    # 输出关节名称
+    print("\n关节名称:")
+    for i in range(model.njnt):
+        joint_name = model.joint(i).name
+        print(f"关节 {i}: {joint_name}")
+    
     action_scale = config['control']['action_scale']
     # 观测缩放因子
     obs_scales = config['observation_scales']

@@ -19,10 +19,24 @@ observation_scales:
   dof_pos: 1.0            # 关节位置缩放  
   dof_vel: 0.05           # 关节速度缩放
 
+# 控制参数 (23个关节的直接数组)
 control:
-  kp: 20.0
-  kd: 0.5
-  action_scale: 0.3
+  control_type: 'P'       # PD控制类型
+  action_scale: 0.3       # 动作缩放
+  
+  # 刚度参数数组 [N*m/rad]，顺序: 左腿(6)+右腿(6)+躯干(1)+左臂(5)+右臂(5)
+  kp: [150, 150, 150, 200, 40, 40,
+       150, 150, 150, 200, 40, 40,
+       200, 
+       100, 100, 100, 100, 100,
+       100, 100, 100, 100, 100]
+
+  # 阻尼参数数组 [N*m*s/rad]，顺序同上
+  kd: [4, 4, 4, 6, 2, 2,
+       4, 4, 4, 6, 2, 2,
+       4, 
+       4, 4, 4, 4, 4,
+       4, 4, 4, 4, 4]
 
 model:
   default_model_path: "/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_ground/models/policy_g1_ground_12000.onnx"
