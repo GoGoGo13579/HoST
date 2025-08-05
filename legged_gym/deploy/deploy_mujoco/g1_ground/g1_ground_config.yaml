@@ -1,0 +1,38 @@
+# G1 Ground Deployment Configuration
+simulation:
+  xml_path: "/home/shenlan/HoST/legged_gym/resources/robots/g1/g1_23dof.xml"
+  simulation_dt: 0.002
+  control_decimation: 10
+
+robot:
+  num_joints: 23
+  
+# 观测配置
+observations:
+  num_single_obs: 76      # 单步观测维度
+  history_length: 6       # 历史步数
+  total_obs_dim: 456      # 总观测维度 = 76 * 6
+  
+# 观测缩放因子 (匹配训练配置)
+observation_scales:
+  ang_vel: 0.25           # 角速度缩放
+  dof_pos: 1.0            # 关节位置缩放  
+  dof_vel: 0.05           # 关节速度缩放
+
+control:
+  kp: 20.0
+  kd: 0.5
+  action_scale: 0.3
+
+model:
+  default_model_path: "/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_ground/models/policy_g1_ground_12000.onnx"
+  
+# Initial position (standing)
+initial_pose:
+  position: [0.0, 0.0, 0.5]  # x, y, z
+  orientation: [0.0, 1.0, 0.0, 1.0]  # w, x, y, z quaternion
+  joint_angles: [0.0, 0.0, -0.2, 0.4, -0.2, 0.0,  # left leg
+                 0.0, 0.0, -0.2, 0.4, -0.2, 0.0,  # right leg
+                 0.0, 0.0, 0.0, 0.0,              # torso
+                 0.0, 0.0, 0.0,                   # left arm
+                 0.0, 0.0, 0.0, 0.0]              # right arm

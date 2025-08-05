@@ -213,11 +213,7 @@ def export_policy_as_onnx(actor_critic, path, obs_size, exported_policy_name="po
         output_names=["action"],
         export_params=True,
         opset_version=13,
-        do_constant_folding=True,
-        dynamic_axes={
-            'actor_obs': {0: 'batch_size'},
-            'action': {0: 'batch_size'}
-        }
+        do_constant_folding=True
     )
     
     print(f'Exported policy as ONNX model to: {onnx_path}')
