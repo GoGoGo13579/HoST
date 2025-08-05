@@ -33,16 +33,20 @@ def load_config(config_path):
         return yaml.load(f, Loader=yaml.FullLoader)
 
 
-def get_gravity_orientation(quat):
+def get_gravity_orientation(quaternion):
     """从四元数获取机体坐标系下的重力方向"""
-    # quat格式为 [w, x, y, z]
-    w, x, y, z = quat
-    # 旋转矩阵将世界坐标系重力[0,0,-1]转换到机体坐标系
-    return np.array([
-        2 * (x*z - w*y),
-        2 * (y*z + w*x), 
-        w*w - x*x - y*y + z*z
-    ])
+    # quaternion格式为 [w, x, y, z]
+    qw = quaternion[0]
+    qx = quaternion[1]
+    qy = quaternion[2]
+    qz = quaternion[3]
+
+    gravity_orientation = np.zeros(3)
+    gravity_orientation[0] = 2 * (-qz * qx + qw * qy)
+    gravity_orientation[1] = -2 * (qz * qy + qw * qx)
+    gravity_orientation[2] = 1 - 2 * (qw * qw + qz * qz)
+
+    return gravity_orientation
 
 
 def get_observations(data, num_joints, last_actions, action_rescale, obs_scales):
