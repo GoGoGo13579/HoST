@@ -54,10 +54,10 @@ control:
 
 model:
   # default_model_path: "/home/shenlan/zzy_ws/HoST/legged_gym/deploy/deploy_mujoco/g1_ground/models/ground_Jan20_00-39-48_test_elbow0_g1_ground_150_200_0.25.onnx"
-  default_model_path: "/home/shenlan/zzy_ws/HoST/legged_gym/deploy/deploy_mujoco/g1_ground/models/ground_Jan22_07-22-54_test_noKnee_feetparallel1_1520_0.25_v0.onnx"
+  # default_model_path: "/home/shenlan/zzy_ws/HoST/legged_gym/deploy/deploy_mujoco/g1_ground/models/ground_Jan22_07-22-54_test_noKnee_feetparallel1_1520_0.25_v0.onnx"
   # default_model_path: "/home/shenlan/zzy_ws/HoST/legged_gym/deploy/deploy_mujoco/g1_ground/models/0322_prone1(1).onnx"
   # default_model_path: "/home/shenlan/zzy_ws/HoST/legged_gym/deploy/deploy_mujoco/g1_ground/models/0322_prone2(1).onnx"
-  # default_model_path: "/home/shenlan/zzy_ws/HoST/legged_gym/deploy/deploy_mujoco/g1_ground/models/policy_g1_ground_12000.onnx"
+  default_model_path: "/home/shenlan/zzy_ws/HoST/legged_gym/deploy/deploy_mujoco/g1_ground/models/policy_g1_ground_12000.onnx"
 # Initial position (standing) - 按照MuJoCo中的实际关节顺序
 initial_pose:
   position: [0.0, 0.0, 0.5]  # x, y, z

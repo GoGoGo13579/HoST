@@ -39,7 +39,7 @@ python -c "import torch; print(f'PyTorch版本: {torch.__version__}, CUDA可用:
 
 ### 训练
 ```bash
-python legged_gym/legged_gym/scripts/train.py --task g1_ground --run_name test_g1 --headless --num_envs=1 # [ground, platform, slope, wall]
+python legged_gym/legged_gym/scripts/train.py --task g1_ground --run_name test_g1 --headless --num_envs=8192 # [ground, platform, slope, wall]
 ```
 
 ### 推理

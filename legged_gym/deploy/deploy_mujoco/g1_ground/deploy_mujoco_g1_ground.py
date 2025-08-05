@@ -189,7 +189,8 @@ def main():
                     obs_input = obs_history.flatten().reshape(1, -1)
                     # obs_input = np.flip(obs_input, axis=1)
                     # 运行推理
-                    policy_output = ort_session.run(None, {'input': obs_input})
+                    policy_output = ort_session.run(None, {'actor_obs': obs_input})
+                    # policy_output = ort_session.run(None, {'input': obs_input})
                     actions = policy_output[0].flatten()  # 移除批次维度
                 else:
                     actions = np.zeros(num_joints, dtype=np.float32)
