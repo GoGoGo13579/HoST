@@ -5,6 +5,8 @@ from unitree_sdk2py.idl.default import unitree_hg_msg_dds__LowState_
 from unitree_sdk2py.idl.unitree_hg.msg.dds_ import LowCmd_
 from unitree_sdk2py.idl.unitree_hg.msg.dds_ import LowState_
 from unitree_sdk2py.utils.crc import CRC
+from unitree_sdk2py.utils.thread import RecurrentThread
+from unitree_sdk2py.comm.motion_switcher.motion_switcher_client import MotionSwitcherClient
 
 import numpy as np
 import time
@@ -25,6 +27,11 @@ except ImportError:
 current_state = "reset"  # reset, policy
 policy_started = False
 reset_completed = False
+
+
+class Mode:
+    PR = 0  # Series Control for Pitch/Roll Joints
+    AB = 1  # Parallel Control for A/B Joints
 
 
 def wait_for_keyboard_input():
@@ -160,9 +167,23 @@ class G1RealController:
         self.quaternion = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float32)  # [w, x, y, z]
         self.ang_vel = np.zeros(3, dtype=np.float32)
         
+        # Motion switcher initialization
+        self.msc = MotionSwitcherClient()
+        self.msc.SetTimeout(5.0)
+        self.msc.Init()
+        
+        # Release any existing mode
+        status, result = self.msc.CheckMode()
+        while result['name']:
+            self.msc.ReleaseMode()
+            status, result = self.msc.CheckMode()
+            time.sleep(1)
+        
         # SDK通信设置
         self.low_cmd = unitree_hg_msg_dds__LowCmd_()
         self.low_state = unitree_hg_msg_dds__LowState_()
+        self.mode_machine_ = 0
+        self.update_mode_machine_ = False
         
         # 发布器和订阅器
         self.lowcmd_publisher = ChannelPublisher("rt/lowcmd", LowCmd_)
@@ -208,6 +229,11 @@ class G1RealController:
         """低级状态消息处理"""
         self.low_state = msg
         
+        # Update mode_machine on first message
+        if self.update_mode_machine_ == False:
+            self.mode_machine_ = self.low_state.mode_machine
+            self.update_mode_machine_ = True
+        
         # 更新关节状态
         for i in range(self.num_joints):
             self.qj[i] = msg.motor_state[i].q
@@ -233,6 +259,12 @@ class G1RealController:
         while self.low_state.tick == 0:
             time.sleep(0.01)
         print("成功连接到机器人")
+        
+        # Wait for mode_machine to be initialized
+        print("等待模式机器初始化...")
+        while self.update_mode_machine_ == False:
+            time.sleep(0.1)
+        print(f"模式机器初始化完成，当前模式: {self.mode_machine_}")
     
     def init_cmd(self):
         """初始化控制命令"""
@@ -264,8 +296,11 @@ class G1RealController:
             # 计算插值进度
             progress = step / (total_steps - 1)
             
+            # 设置模式
+            self.low_cmd.mode_pr = Mode.PR
+            self.low_cmd.mode_machine = self.mode_machine_
+            
             # 对需要复位的关节进行线性插值
-            self.low_cmd.mode_machine = 1
             for idx, joint_id in enumerate(self.reset_joint_idx):
                 start_pos = start_positions[joint_id]
                 target_pos = self.reset_joint_angel[idx]
@@ -288,7 +323,9 @@ class G1RealController:
     
     def policy_mode(self, target_positions):
         """策略模式：执行策略输出的动作"""
-        self.low_cmd.mode_machine = 1
+        self.low_cmd.mode_pr = Mode.PR
+        self.low_cmd.mode_machine = self.mode_machine_
+        
         for i in range(self.num_joints):
             self.low_cmd.motor_cmd[i].mode = 1
             self.low_cmd.motor_cmd[i].q = target_positions[i]

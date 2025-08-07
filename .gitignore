@@ -179,3 +179,5 @@ legged_gym/logs/
 legged_gym/deploy/deploy_mujoco/g1_ground/models/
 
 isaacgym/
+
+unitree_sdk2_python
