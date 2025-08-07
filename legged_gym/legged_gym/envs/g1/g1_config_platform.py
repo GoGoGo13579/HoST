@@ -232,7 +232,7 @@ class G1Cfg( LeggedRobotCfg ):
             regu_dof_vel_limits = -1 #0.0
 
             # style reward
-            style_waist_deviation = -10
+            style_waist_deviation = -20 #zhanghao -10
             style_hip_yaw_deviation = -10
             style_hip_roll_deviation = -10
             style_left_foot_displacement = 2.5
@@ -240,7 +240,7 @@ class G1Cfg( LeggedRobotCfg ):
             style_knee_deviation = -10
             style_shank_orientation = 10
             style_ground_parallel = 20
-            style_feet_distance = -10
+            style_feet_distance = -20 #zhanghao -10
             style_feet_stumble = -25
             style_lower_body_deviation = 1
             style_style_ang_vel_xy = 1
@@ -267,7 +267,7 @@ class G1Cfg( LeggedRobotCfg ):
         payload_mass_range = [-2, 5]
 
         randomize_com_displacement = use_random
-        com_displacement_range = [-0.03, 0.03]
+        com_displacement_range = [-0.04, 0.04] # zhanghao 0.03
 
         randomize_link_mass = use_random
         link_mass_range = [0.8, 1.2]
@@ -288,7 +288,7 @@ class G1Cfg( LeggedRobotCfg ):
         initial_joint_pos_scale = [0.8, 1.2]
         initial_joint_pos_offset = [-0.1, 0.1]
         
-        push_robots = False
+        push_robots = True # zhanghao False
         push_interval_s = 10
         max_push_vel_xy = 0.5
 

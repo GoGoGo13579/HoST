@@ -726,6 +726,13 @@ class LeggedRobot(BaseTask):
         # save body names from the asset
         body_names = self.gym.get_asset_rigid_body_names(robot_asset)
         self.dof_names = self.gym.get_asset_dof_names(robot_asset)
+        
+        # 打印关节排序 (Isaac Gym)
+        print("\nIsaac Gym 关节排序:")
+        for i, joint_name in enumerate(self.dof_names):
+            print(f"关节 {i}: {joint_name}")
+        print()
+        
         self.num_bodies = len(body_names)
         self.num_dofs = len(self.dof_names)
         feet_names = [s for s in body_names if self.cfg.asset.foot_name in s and 'auxiliary' not in s]
@@ -1148,6 +1155,7 @@ class LeggedRobot(BaseTask):
         return reward
 
     def _reward_shank_orientation(self):
+        # 鼓励小腿竖直
         left_knee_pos = self.rigid_body_states[:, self.left_knee_indices, :3].clone()
         right_knee_pos = self.rigid_body_states[:, self.right_knee_indices, :3].clone()
         left_foot_pos = self.rigid_body_states[:, self.left_foot_indices, :3].clone()

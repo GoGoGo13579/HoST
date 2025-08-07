@@ -1176,7 +1176,7 @@ class LeggedRobot(BaseTask):
     #-----------------------------style rewards-----------------------------
     def _reward_waist_deviation(self):
         wrist_dof = self.dof_pos[:, self.waist_joint_indices]
-        reward = (torch.abs(wrist_dof) > 1.4).float()
+        reward = (torch.abs(wrist_dof) > 1.2).float() #zhanghao 1.4
         return reward.squeeze(1)
 
     def _reward_hip_yaw_deviation(self):
@@ -1243,7 +1243,7 @@ class LeggedRobot(BaseTask):
         right_foot_pos = self.rigid_body_states[:, self.right_foot_indices, :3].clone()
         feet_distances = torch.norm(left_foot_pos - right_foot_pos, dim=-1)
         reward = tolerance(feet_distances, [0, 0.4], 0.38, 0.05)
-        return (feet_distances > 0.9).squeeze(1)
+        return (feet_distances > 0.5).squeeze(1) #zhanghao 0.9
 
     def _reward_feet_stumble(self):
         # Penalize feet hitting vertical surfaces

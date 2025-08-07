@@ -1,0 +1,52 @@
+# G1平台部署配置
+simulation:
+  xml_path: "/home/shenlan/HoST/legged_gym/resources/robots/g1/g1_29dof_platform.xml"
+  simulation_dt: 0.002
+  control_decimation: 10
+
+robot:
+  num_joints: 27  # 27dof机器人关节数
+  
+observations:
+  num_single_obs: 76      # 单步观测维度 (基于23dof策略格式)
+  history_length: 6       # 历史步数
+  total_obs_dim: 456      # 总维度: 76 * 6
+  
+observation_scales:
+  ang_vel: 0.25
+  dof_pos: 1.0
+  dof_vel: 0.05
+
+control:
+  control_type: 'P'
+  action_scale: 0.25
+  # 27dof关节顺序: 左腿(6) + 右腿(6) + 腰部(1) + 左臂(4) + 左手腕(3) + 右臂(4) + 右手腕(3)
+  kp: [150, 150, 150, 200, 40, 40,     # 左腿
+       150, 150, 150, 200, 40, 40,     # 右腿
+       100,                            # 腰部
+       100, 100, 100, 100,        # 左臂
+       40, 40, 40,                     # 左手腕 (降低增益减少晃动)
+       100, 100, 100, 100,             # 右臂 (4个关节)
+       40, 40, 40]                     # 右手腕 (降低增益减少晃动)
+
+  kd: [4, 4, 4, 6, 2, 2,              # 左腿
+       4, 4, 4, 6, 2, 2,              # 右腿
+       4,                             # 腰部
+       4, 4, 4, 4,                    # 左臂 (4个关节)
+       6, 6, 6,                       # 左手腕 (增加阻尼减少振荡)
+       4, 4, 4, 4,                    # 右臂 
+       6, 6, 6]                       # 右手腕 (增加阻尼减少振荡)
+
+model:
+  default_model_path: "/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_platform/models/policy_g1_platform_12000.onnx"
+
+initial_pose:
+  position: [-0.5, 0.0, 0.5]  # x, y, z坐标
+  orientation: [0.0, 1.0, 0.0, 1.0]  # w, x, y, z四元数
+  joint_angles: [-0.1, 0.0, 0.0, 0.3, -0.2, 0.0,  # 左腿
+                 -0.1, 0.0, 0.0, 0.3, -0.2, 0.0,  # 右腿
+                 0.0,                               # 腰部
+                 0.0, 0.3, 0.0, 1.57,               # 左臂 (4个关节)
+                 0.0, 0.0, 0.0,                    # 左手腕 (新增)
+                 0.0, -0.3, 0.0, 1.57,          # 右臂 (4个关节)
+                 0.0, 0.0, 0.0]                    # 右手腕 (新增)

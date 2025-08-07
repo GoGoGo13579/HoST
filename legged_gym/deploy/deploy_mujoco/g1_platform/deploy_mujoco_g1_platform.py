@@ -84,7 +84,7 @@ def main():
     parser.add_argument('--model_path', type=str, default=None, 
                        help='ONNX模型文件路径')
     parser.add_argument('--config', type=str, 
-                       default='/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_ground/g1_ground_config.yaml',
+                       default='/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_platform/g1_platfrom_config.yaml',
                        help='配置文件路径')
     args = parser.parse_args()
     
