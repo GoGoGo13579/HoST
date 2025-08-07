@@ -23,7 +23,7 @@ except ImportError:
     sys.exit(1)
 
 # 全局状态控制
-current_state = "damping"  # damping, reset, policy
+current_state = "zero_torque"  # zero_torque, damping, reset, policy
 policy_started = False
 
 
@@ -32,24 +32,29 @@ def wait_for_keyboard_input():
     global current_state, policy_started
     
     print("\n=== 控制说明 ===")
-    print("1: 进入阻尼模式")
-    print("2: 手臂复位")
-    print("3: 执行policy")
+    print("1: 零力矩")
+    print("2: 进入阻尼模式")
+    print("3: 手臂复位")
+    print("4: 执行policy")
     print("q: 退出程序")
     print("===============\n")
     
     while True:
         try:
-            key = input("请输入命令 (1/2/3/q): ").strip()
+            key = input("请输入命令 (1/2/3/4/q): ").strip()
             if key == '1':
+                current_state = "zero_torque"
+                policy_started = False
+                print("切换到零力矩模式")
+            elif key == '2':
                 current_state = "damping"
                 policy_started = False
                 print("切换到阻尼模式")
-            elif key == '2':
+            elif key == '3':
                 current_state = "reset"
                 policy_started = False
-                print("手臂复位")
-            elif key == '3':
+                print("开始手臂复位")
+            elif key == '4':
                 current_state = "policy"
                 policy_started = True
                 print("开始执行policy")
@@ -57,7 +62,7 @@ def wait_for_keyboard_input():
                 print("退出程序")
                 return
             else:
-                print("无效输入，请输入1、2、3或q")
+                print("无效输入，请输入1、2、3、4或q")
         except (EOFError, KeyboardInterrupt):
             print("退出输入线程")
             return
@@ -106,7 +111,7 @@ def create_joint_mapping():
     return map_23dof_to_29dof, unmapped_joints_29dof
 
 
-def convert_23dof_to_29dof_actions(actions_23dof, map_23dof_to_29dof, unmapped_joints_29dof, default_positions):
+def convert_23dof_to_29dof_actions(actions_23dof, map_23dof_to_29dof, unmapped_joints_29dof):
     """将23dof策略动作转换为29dof机器人动作"""
     actions_29dof = np.zeros(29, dtype=np.float32)
     
@@ -158,6 +163,12 @@ class G1RealController:
         self.config = config
         self.num_joints = 29
         
+        # 机器人状态（必须在订阅器初始化前初始化）
+        self.qj = np.zeros(self.num_joints, dtype=np.float32)
+        self.dqj = np.zeros(self.num_joints, dtype=np.float32)
+        self.quaternion = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float32)  # [w, x, y, z]
+        self.ang_vel = np.zeros(3, dtype=np.float32)
+        
         # SDK通信设置
         self.low_cmd = unitree_hg_msg_dds__LowCmd_()
         self.low_state = unitree_hg_msg_dds__LowState_()
@@ -176,8 +187,8 @@ class G1RealController:
         self.init_cmd()
         
         # 控制参数
-        self.kp_27dof = np.array(config['control']['kp'], dtype=np.float32)
-        self.kd_27dof = np.array(config['control']['kd'], dtype=np.float32)
+        self.kp_29dof = np.array(config['control']['kp'], dtype=np.float32)
+        self.kd_29dof = np.array(config['control']['kd'], dtype=np.float32)
         self.action_scale = config['control']['action_scale']
         self.obs_scales = config['observation_scales']
         
@@ -186,10 +197,11 @@ class G1RealController:
 
         # 无效关节id
         self.invadlid_joints_id = config['robot']['invadlid_joints_id']
+        self.reset_joint_idx = config['reset']['joint_idx']
+        self.reset_joint_angel = config['reset']['joint_angel']
         
         # 默认关节位置（用于复位）
         self.default_joint_pos = np.array(config['initial_pose']['joint_angles'], dtype=np.float32)
-        self.reset_joint_pos = self.default_joint_pos.copy()
         
         # 观测和动作缓冲
         self.history_length = 6
@@ -197,11 +209,12 @@ class G1RealController:
         self.obs_history_23dof = np.zeros((self.history_length, self.obs_dim_single_23dof), dtype=np.float32)
         self.last_actions_23dof = np.zeros(23, dtype=np.float32)
         
-        # 机器人状态
-        self.qj = np.zeros(self.num_joints, dtype=np.float32)
-        self.dqj = np.zeros(self.num_joints, dtype=np.float32)
-        self.quaternion = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float32)  # [w, x, y, z]
-        self.ang_vel = np.zeros(3, dtype=np.float32)
+        # 平滑复位相关变量
+        self.reset_duration = 3.0  # 复位持续时间（秒）
+        self.reset_start_time = None
+        self.reset_start_positions = None
+        self.reset_target_positions = np.zeros(self.num_joints, dtype=np.float32)
+        self.is_resetting = False
         
         # 初始化LocoClient
         self.loco_client = LocoClient()
@@ -246,7 +259,6 @@ class G1RealController:
         """初始化控制命令"""
         # 设置所有电机为位置控制模式
         for i in range(self.num_joints):
-            self.low_cmd.motor_cmd[i].mode = 0x01  # 位置控制模式
             self.low_cmd.motor_cmd[i].q = 0.0
             self.low_cmd.motor_cmd[i].dq = 0.0
             self.low_cmd.motor_cmd[i].tau = 0.0
@@ -259,32 +271,76 @@ class G1RealController:
         self.low_cmd.crc = CRC().Crc(self.low_cmd)
         self.lowcmd_publisher.Write(self.low_cmd)
     
+    def zero_torque_mode(self):
+        """零力矩模式：使用loco_client进入零力矩"""
+        self.loco_client.ZeroTorque()
+    
     def damping_mode(self):
         """阻尼模式：使用loco_client进入阻尼"""
         self.loco_client.Damp()
     
-    def reset_mode(self):
-        """复位模式：仅复位手臂关节"""
-        for i in range(self.num_joints):
-            if i >= 13:  # 只复位手臂关节 (索引13开始)
-                self.low_cmd.motor_cmd[i].q = self.reset_joint_pos[i]
-                self.low_cmd.motor_cmd[i].kp = 20.0  # 适中刚度
-                self.low_cmd.motor_cmd[i].kd = 2.0
-            else:  # 腿部保持阻尼
-                self.low_cmd.motor_cmd[i].q = self.qj[i]
-                self.low_cmd.motor_cmd[i].kp = 5.0
-                self.low_cmd.motor_cmd[i].kd = 1.0
+    def start_reset_mode(self):
+        """启动复位模式：记录当前位置并开始平滑复位"""
+        if not self.is_resetting:
+            self.reset_start_time = time.time()
+            self.reset_start_positions = self.qj.copy()
             
-            self.low_cmd.motor_cmd[i].dq = 0.0
-            self.low_cmd.motor_cmd[i].tau = 0.0
+            # 设置目标位置（只设置需要复位的关节）
+            self.reset_target_positions = self.qj.copy()  # 先复制当前位置
+            for idx, joint_id in enumerate(self.reset_joint_idx):
+                self.reset_target_positions[joint_id] = self.reset_joint_angel[idx]
+            
+            self.is_resetting = True
+            print(f"开始平滑复位，预计用时{self.reset_duration}秒")
+    
+    def reset_mode(self):
+        """复位模式：执行平滑插值复位"""
+        if not self.is_resetting:
+            return
+            
+        current_time = time.time()
+        elapsed_time = current_time - self.reset_start_time
+        
+        if elapsed_time >= self.reset_duration:
+            # 复位完成
+            self.is_resetting = False
+            print("复位完成")
+            # 确保最终位置准确
+            for idx, joint_id in enumerate(self.reset_joint_idx):
+                self.low_cmd.motor_cmd[joint_id].q = self.reset_joint_angel[idx]
+                self.low_cmd.motor_cmd[joint_id].kp = 40.0
+                self.low_cmd.motor_cmd[joint_id].kd = 2.0
+                self.low_cmd.motor_cmd[joint_id].dq = 0.0
+                self.low_cmd.motor_cmd[joint_id].tau = 0.0
+        else:
+            # 计算插值进度（使用线性插值）
+            progress = elapsed_time / self.reset_duration
+            
+            # 对需要复位的关节进行线性插值
+            for idx, joint_id in enumerate(self.reset_joint_idx):
+                start_pos = self.reset_start_positions[joint_id]
+                target_pos = self.reset_joint_angel[idx]
+                interpolated_pos = start_pos + progress * (target_pos - start_pos)
+                
+                self.low_cmd.motor_cmd[joint_id].q = interpolated_pos
+                self.low_cmd.motor_cmd[joint_id].kp = 40.0
+                self.low_cmd.motor_cmd[joint_id].kd = 2.0
+                self.low_cmd.motor_cmd[joint_id].dq = 0.0
+                self.low_cmd.motor_cmd[joint_id].tau = 0.0
+    
+    def stop_reset_mode(self):
+        """停止复位模式"""
+        if self.is_resetting:
+            self.is_resetting = False
+            print("复位被中断")
     
     def policy_mode(self, target_positions):
         """策略模式：执行策略输出的动作"""
         for i in range(self.num_joints):
             self.low_cmd.motor_cmd[i].q = target_positions[i]
             self.low_cmd.motor_cmd[i].dq = 0.0
-            self.low_cmd.motor_cmd[i].kp = self.kp_27dof[i]
-            self.low_cmd.motor_cmd[i].kd = self.kd_27dof[i]
+            self.low_cmd.motor_cmd[i].kp = self.kp_29dof[i]
+            self.low_cmd.motor_cmd[i].kd = self.kd_29dof[i]
             self.low_cmd.motor_cmd[i].tau = 0.0
 
 
@@ -299,20 +355,8 @@ def main():
     
     # 创建配置文件（如果不存在）
     if not os.path.exists(args.config):
-        print(f"配置文件不存在，创建默认配置: {args.config}")
-        os.makedirs(os.path.dirname(args.config), exist_ok=True)
-        # 使用平台部署的配置作为模板
-        platform_config_path = '/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_platform_29dof/g1_platfrom_config.yaml'
-        if os.path.exists(platform_config_path):
-            with open(platform_config_path, 'r') as f:
-                config_content = f.read()
-                # 修改模型路径为实物部署路径
-                config_content = config_content.replace(
-                    'default_model_path: "/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_platform/models/policy_g1_platform_12000.onnx"',
-                    'default_model_path: "/home/shenlan/HoST/legged_gym/deploy/deploy_real/g1_29dof/models/policy_g1_platform_12000.onnx"'
-                )
-            with open(args.config, 'w') as f:
-                f.write(config_content)
+        print(f"配置文件不存在: {args.config}")
+        sys.exit(1)
     
     # 加载配置
     config = load_config(args.config)
@@ -353,7 +397,18 @@ def main():
             loop_start = time.time()
             
             # 状态机控制
-            if current_state == "damping":
+            if current_state == "zero_torque":
+                controller.stop_reset_mode()  # 停止复位（如果正在进行）
+                controller.zero_torque_mode()
+                # loco_client处理命令发送，不需要额外发送低级命令
+                control_counter += 1
+                elapsed = time.time() - loop_start
+                if elapsed < control_dt:
+                    time.sleep(control_dt - elapsed)
+                continue
+                
+            elif current_state == "damping":
+                controller.stop_reset_mode()  # 停止复位（如果正在进行）
                 controller.damping_mode()
                 # loco_client处理命令发送，不需要额外发送低级命令
                 control_counter += 1
@@ -363,9 +418,13 @@ def main():
                 continue
                 
             elif current_state == "reset":
+                # 如果刚进入复位状态且还未开始复位，则启动复位
+                if not controller.is_resetting:
+                    controller.start_reset_mode()
                 controller.reset_mode()
                 
             elif current_state == "policy" and policy_started:
+                controller.stop_reset_mode()  # 停止复位（如果正在进行）
                 # 策略推理（每50ms执行一次，即每2.5个控制周期）
                 if control_counter % 2 == 0:
                     # 获取当前观测（23dof格式）
@@ -387,7 +446,7 @@ def main():
                     # 转换为29dof动作
                     actions_29dof = convert_23dof_to_29dof_actions(
                         actions_23dof, controller.map_23dof_to_29dof, 
-                        controller.unmapped_joints_29dof, controller.default_joint_pos
+                        controller.unmapped_joints_29dof
                     )
                     
                     # 更新目标位置
@@ -410,8 +469,8 @@ def main():
                 time.sleep(control_dt - elapsed)
             
     except KeyboardInterrupt:
-        print("\n收到Ctrl+C，切换到阻尼模式并退出...")
-        controller.damping_mode()
+        print("\n收到Ctrl+C，切换到零力矩模式并退出...")
+        controller.zero_torque_mode()
         time.sleep(0.1)
     
     print("程序退出")
