@@ -1181,7 +1181,8 @@ class LeggedRobot(BaseTask):
 
     def _reward_hip_yaw_deviation(self):
         hip_yaw_dof = self.dof_pos[:, self.hip_joint_indices]
-        reward = (torch.max(torch.abs(self.dof_pos[:, self.hip_joint_indices]), dim=-1)[0] > 1.4) | (torch.min(torch.abs(self.dof_pos[:, self.hip_joint_indices]), dim=-1)[0] > 0.9)
+        reward = (torch.max(torch.abs(self.dof_pos[:, self.hip_joint_indices]), dim=-1)[0] > 1.1) | (torch.min(torch.abs(self.dof_pos[:, self.hip_joint_indices]), dim=-1)[0] > 0.6)
+        # zhanghao 1.4 0.9
         return reward
 
     def _reward_hip_roll_deviation(self):
@@ -1247,9 +1248,11 @@ class LeggedRobot(BaseTask):
 
     def _reward_feet_stumble(self):
         # Penalize feet hitting vertical surfaces
+        # 避免滑动，fmax = miu * fz
         return torch.any(torch.norm(self.contact_forces[:, self.feet_indices, :2], dim=2) > 3 * torch.abs(self.contact_forces[:, self.feet_indices, 2]), dim=1)
 
     def _reward_lower_body_deviation(self):
+        # 左右腿尽量相似
         lower_body_dof_left = torch.cat([self.left_hip_roll_joint_indices, self.left_hip_pitch_joint_indices, self.left_hip_joint_indices, self.left_knee_joint_indices])
         lower_body_dof_right = torch.cat([self.right_hip_roll_joint_indices, self.right_hip_pitch_joint_indices, self.right_hip_joint_indices, self.right_knee_joint_indices])
         left_dof_pos = self.dof_pos[:, lower_body_dof_left].unsqueeze(1)
@@ -1269,7 +1272,27 @@ class LeggedRobot(BaseTask):
         hip_roll_dof = self.dof_pos[:, self.shoulder_roll_joint_indices]
         reward = (self.dof_pos[:, self.shoulder_roll_joint_indices[0]] < 0) | (self.dof_pos[:, self.shoulder_roll_joint_indices[1]] > 0)
         return reward
-
+    
+    def _reward_feet_orientation(self):
+        left_foot_quat = self.rigid_body_states[:, self.left_foot_indices, 3:7].squeeze(1)  
+        right_foot_quat = self.rigid_body_states[:, self.right_foot_indices, 3:7].squeeze(1) 
+        left_foot_gravity = quat_rotate_inverse(left_foot_quat, self.gravity_vec)   
+        right_foot_gravity = quat_rotate_inverse(right_foot_quat, self.gravity_vec)  
+        left_foot_xy_gravity = torch.norm(left_foot_gravity[:, :2], dim=1)  
+        right_foot_xy_gravity = torch.norm(right_foot_gravity[:, :2], dim=1) 
+        
+        left_foot_reward = torch.exp(left_foot_xy_gravity * self.cfg.constraints.feet_orientation_sigma)
+        right_foot_reward = torch.exp(right_foot_xy_gravity * self.cfg.constraints.feet_orientation_sigma)
+        
+        left_foot_contact = self.contact_forces[:, self.left_foot_indices, 2].squeeze(1) > 1.
+        right_foot_contact = self.contact_forces[:, self.right_foot_indices, 2].squeeze(1) > 1.
+        
+        left_foot_reward = left_foot_reward * left_foot_contact
+        right_foot_reward = right_foot_reward * right_foot_contact
+        
+        reward = left_foot_reward + right_foot_reward
+        
+        return reward
 
     #--------------------------post-task rewards-----------------------------\
     def _reward_ang_vel_xy(self):

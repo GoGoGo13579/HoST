@@ -212,7 +212,7 @@ class G1Cfg( LeggedRobotCfg ):
 
         class scales:
             task_orientation = 1
-            task_head_height = 1
+            task_head_height = 3 #zhanghao 1
 
     class constraints( LeggedRobotCfg.rewards ):
         is_gaussian = True
@@ -226,7 +226,7 @@ class G1Cfg( LeggedRobotCfg ):
         hip_yaw_var_sigma = -2
         target_dof_pos_sigma = -0.1
         post_task = False
-        
+        feet_orientation_sigma = -2
         class scales:
             # regularization reward
             regu_dof_acc = -2.5e-7
@@ -241,9 +241,9 @@ class G1Cfg( LeggedRobotCfg ):
 
             # style reward
             style_waist_deviation = -10
-            style_hip_yaw_deviation = -10
-            style_hip_roll_deviation = -10
-            style_hip_pitch_deviation = -10
+            style_hip_yaw_deviation = -20 #zhanghao -10
+            style_hip_roll_deviation = -40 #zhanghao -10
+            style_hip_pitch_deviation = -10 #zhanghao -10
             style_shoulder_roll_deviation = -2.5
             style_left_foot_displacement = 2.5
             style_right_foot_displacement = 2.5
@@ -251,6 +251,7 @@ class G1Cfg( LeggedRobotCfg ):
             style_thigh_ori = 10
             style_feet_distance = -10
             style_style_ang_vel_xy = 25
+            style_feet_orientation = 25
 
             # post-task reward
             target_ang_vel_xy = 10
@@ -275,7 +276,7 @@ class G1Cfg( LeggedRobotCfg ):
         payload_mass_range = [-2, 5]
 
         randomize_com_displacement = use_random
-        com_displacement_range = [-0.03, 0.03]
+        com_displacement_range = [-0.05, 0.05] #zhanghao 0.03
 
         randomize_link_mass = use_random
         link_mass_range = [0.8, 1.2]
@@ -296,7 +297,7 @@ class G1Cfg( LeggedRobotCfg ):
         initial_joint_pos_scale = [0.9, 1.1]
         initial_joint_pos_offset = [-0.1, 0.1]
         
-        push_robots = False
+        push_robots = True
         push_interval_s = 10
         max_push_vel_xy = 0.5
 

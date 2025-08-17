@@ -204,7 +204,7 @@ class G1Cfg( LeggedRobotCfg ):
 
         class scales:
             task_orientation = 1
-            task_head_height = 1
+            task_head_height = 4 # zhanghao 3
 
     class constraints( LeggedRobotCfg.rewards ):
         is_gaussian = True
@@ -217,6 +217,7 @@ class G1Cfg( LeggedRobotCfg ):
         right_foot_displacement_sigma = -2
         hip_yaw_var_sigma = -2
         target_dof_pos_sigma = -0.1
+        feet_orientation_sigma = -2
         post_task = False
         
         class scales:
@@ -233,8 +234,8 @@ class G1Cfg( LeggedRobotCfg ):
 
             # style reward
             style_waist_deviation = -20 #zhanghao -10
-            style_hip_yaw_deviation = -10
-            style_hip_roll_deviation = -10
+            style_hip_yaw_deviation = -25 #zhanghao -10
+            style_hip_roll_deviation = -60 #zhanghao -10
             style_left_foot_displacement = 2.5
             style_right_foot_displacement = 2.5
             style_knee_deviation = -10
@@ -245,7 +246,7 @@ class G1Cfg( LeggedRobotCfg ):
             style_lower_body_deviation = 1
             style_style_ang_vel_xy = 1
             style_shoulder_roll_deviation = -2.5
-
+            style_feet_orientation = 20
             # post-task reward
             target_ang_vel_xy = 10
             target_lin_vel_xy = 10

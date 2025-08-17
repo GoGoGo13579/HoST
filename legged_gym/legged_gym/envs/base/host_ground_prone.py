@@ -1528,3 +1528,25 @@ class LeggedRobot(BaseTask):
         feet_distances = torch.norm(left_feet_pos[:, :, :2] - right_feet_pos[:, :, :2], dim=-1)
         standup  = self.root_states[:, 2] > self.cfg.rewards.target_base_height_phase3
         return (torch.var(feet_distances, dim=-1) < 1) * standup
+
+
+    def _reward_feet_orientation(self):
+        left_foot_quat = self.rigid_body_states[:, self.left_foot_indices, 3:7].squeeze(1)  
+        right_foot_quat = self.rigid_body_states[:, self.right_foot_indices, 3:7].squeeze(1) 
+        left_foot_gravity = quat_rotate_inverse(left_foot_quat, self.gravity_vec)   
+        right_foot_gravity = quat_rotate_inverse(right_foot_quat, self.gravity_vec)  
+        left_foot_xy_gravity = torch.norm(left_foot_gravity[:, :2], dim=1)  
+        right_foot_xy_gravity = torch.norm(right_foot_gravity[:, :2], dim=1) 
+        
+        left_foot_reward = torch.exp(left_foot_xy_gravity * self.cfg.constraints.feet_orientation_sigma)
+        right_foot_reward = torch.exp(right_foot_xy_gravity * self.cfg.constraints.feet_orientation_sigma)
+        
+        left_foot_contact = self.contact_forces[:, self.left_foot_indices, 2].squeeze(1) > 1.
+        right_foot_contact = self.contact_forces[:, self.right_foot_indices, 2].squeeze(1) > 1.
+        
+        left_foot_reward = left_foot_reward * left_foot_contact
+        right_foot_reward = right_foot_reward * right_foot_contact
+        
+        reward = left_foot_reward + right_foot_reward
+        
+        return reward

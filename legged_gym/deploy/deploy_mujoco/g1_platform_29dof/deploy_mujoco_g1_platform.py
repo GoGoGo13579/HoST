@@ -137,7 +137,7 @@ def convert_23dof_to_27dof_actions(actions_23dof, map_23dof_to_27dof, unmapped_j
     for idx_27dof in unmapped_joints_27dof:
         pos_error = origin_qpos[idx_27dof] - data.qpos[7 + idx_27dof]
         # 限制最大移动幅度，避免突然的大幅度动作
-        max_move = 0.05  # 限制每步最大移动0.05弧度
+        max_move = 0.1  # 限制每步最大
         actions_27dof[idx_27dof] = np.clip(pos_error, -max_move, max_move)
     
     return actions_27dof
@@ -260,6 +260,8 @@ def main():
             else:
                 tau_27dof = np.zeros(27)
             data.ctrl[:] = tau_27dof
+            data.ctrl[17: 19] = 0
+            data.ctrl[24: 26] = 0
             
             # 仿真步进
             mujoco.mj_step(model, data)

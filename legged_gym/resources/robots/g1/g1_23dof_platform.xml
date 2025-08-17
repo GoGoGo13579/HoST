@@ -24,7 +24,7 @@
     
     <!-- 平台：高45cm，允许脚部触地 -->
     <body name="platform">
-      <geom name="platform_main" pos="0 0 0" size="0.8 0.6 0.3" type="box" material="platform_material"/>
+      <geom name="platform_main" pos="0 0 0" size="0.7 0.6 0.5" type="box" material="platform_material"/>
     </body>
   </worldbody>
 </mujoco> 

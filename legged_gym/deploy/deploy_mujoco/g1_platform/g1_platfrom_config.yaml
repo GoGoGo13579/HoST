@@ -19,11 +19,11 @@ observation_scales:
 
 control:
   control_type: 'P'
-  action_scale: 0.25
+  action_scale: 0.3
   # 关节顺序: 左腿(6) + 右腿(6) + 腰部(1) + 左臂(5) + 右臂(5)
-  kp: [150, 150, 150, 200, 40, 40,
-       150, 150, 150, 200, 40, 40,
-       100,
+  kp: [200, 170, 170, 275, 40, 40,
+       200, 170, 170, 275, 40, 40,
+       140,
        100, 100, 100, 100, 100,
        100, 100, 100, 100, 100]
 
@@ -34,7 +34,17 @@ control:
        4, 4, 4, 4, 4]
 
 model:
-  default_model_path: "/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_platform/models/policy_g1_platform_12000.onnx"
+  #default_model_path: "/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_platform/models/policy_g1_platform_4000.onnx"
+
+  #default_model_path: "/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_platform/models/policy_g1_platform_12000.onnx"
+
+  #default_model_path: "/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_platform/models/policy_g1_platform_12500.onnx"
+
+  #default_model_path: "/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_platform/models/policy_g1_platform_3500.onnx"
+
+  default_model_path: "/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_platform/models/policy_g1_platform_12000_3.onnx"
+
+  
 
 initial_pose:
   position: [-0.5, 0.0, 0.7]  # x, y, z坐标

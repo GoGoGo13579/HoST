@@ -96,20 +96,23 @@ def create_joint_mapping():
         6: 6, 7: 7, 8: 8, 9: 9, 10: 10, 11: 11,
         # 腰部 (12 -> 12)
         12: 12,
-        # 左臂 (13-17 -> 13-16,17)
-        13: 13, 14: 14, 15: 15, 16: 16, 17: 17,
-        # 右臂 (18-22 -> 20,21,22,23,24)
-        18: 20, 19: 21, 20: 22, 21: 23, 22: 24
+        # 左臂 (13-17 -> 15-19) - 注意：跳过了13,14，这些是手腕关节
+        13: 15, 14: 16, 15: 17, 16: 18, 17: 19,
+        # 右臂 (18-22 -> 22-26) - 注意：跳过了20,21，这些是手腕关节  
+        18: 22, 19: 23, 20: 24, 21: 25, 22: 26
     }
 
-    # 29dof机器人中无对应策略输出的关节
+    # 29dof机器人中无对应策略输出的关节（手腕关节）
     mapped_29dof_joints = set(map_23dof_to_29dof.values())
     unmapped_joints_29dof = [i for i in range(29) if i not in mapped_29dof_joints]
+    # 将手腕的roll也加入
+    unmapped_joints_29dof.append(19)
+    unmapped_joints_29dof.append(26)
             
     return map_23dof_to_29dof, unmapped_joints_29dof
 
 
-def convert_23dof_to_29dof_actions(actions_23dof, map_23dof_to_29dof, unmapped_joints_29dof):
+def convert_23dof_to_29dof_actions(actions_23dof, map_23dof_to_29dof, unmapped_joints_29dof, q_cur, init_qpos):
     """将23dof策略动作转换为29dof机器人动作"""
     actions_29dof = np.zeros(29, dtype=np.float32)
     
@@ -119,7 +122,7 @@ def convert_23dof_to_29dof_actions(actions_23dof, map_23dof_to_29dof, unmapped_j
 
     # 无策略控制的关节：保持默认位置（手腕关节）
     for idx_29dof in unmapped_joints_29dof:
-        actions_29dof[idx_29dof] = 0.0  # 相对动作为0，保持当前位置
+        actions_29dof[idx_29dof] = init_qpos[idx_29dof] -  q_cur[idx_29dof] # 相对动作为0，保持当前位置
     
     return actions_29dof
 
@@ -230,6 +233,7 @@ class G1RealController:
         self.low_state = msg
         
         # Update mode_machine on first message
+        # ！！！！！最核心就是要更新这个mode_machine_
         if self.update_mode_machine_ == False:
             self.mode_machine_ = self.low_state.mode_machine
             self.update_mode_machine_ = True
@@ -284,8 +288,8 @@ class G1RealController:
     
     def reset_mode(self):
         """复位模式：执行3秒复位"""
-        print("开始复位，持续3秒...")
-        reset_duration = 3.0
+        print("开始复位，持续5秒...")
+        reset_duration = 5.0
         control_dt = 0.02
         total_steps = int(reset_duration / control_dt)
         
@@ -397,7 +401,7 @@ def main():
                 
             elif current_state == "policy" and policy_started:
                 # 策略推理（每50ms执行一次，即每2.5个控制周期）
-                if control_counter % 2 == 0:
+                if control_counter % 1 == 0:
                     # 获取当前观测（23dof格式）
                     current_obs_23dof = get_observations(
                         controller.qj, controller.dqj, controller.quaternion, controller.ang_vel,
@@ -417,9 +421,8 @@ def main():
                     # 转换为29dof动作
                     actions_29dof = convert_23dof_to_29dof_actions(
                         actions_23dof, controller.map_23dof_to_29dof, 
-                        controller.unmapped_joints_29dof
+                        controller.unmapped_joints_29dof, controller.qj, controller.default_joint_pos
                     )
-                    print(actions_29dof)
                     
                     # 更新目标位置
                     target_joint_pos_29dof = controller.qj + actions_29dof * controller.action_scale

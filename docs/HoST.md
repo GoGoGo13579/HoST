@@ -120,7 +120,13 @@ python legged_gym/legged_gym/scripts/visualization/trajectory_head_pelvis.py  --
 python legged_gym/legged_gym/scripts/train.py --task g1_platform --run_name test_g1 --headless --num_envs=4096 --max_iterations=100000 # [ground, platform, slope, wall]
 ```
 
+
+
 ### 推理
+```bash
+python legged_gym/legged_gym/scripts/play.py --task g1_platform --num_envs 64 --checkpoint_path legged_gym/logs/g1_platform/Aug07_15-15-04_g1_0807/model_12500.pt
+```
+
 ```bash
 python legged_gym/legged_gym/scripts/play.py --task g1_platform --num_envs 64 --checkpoint_path legged_gym/logs/g1_wall/Jul29_13-19-23_test_g1/model_3500.pt
 ```
@@ -128,6 +134,9 @@ python legged_gym/legged_gym/scripts/play.py --task g1_platform --num_envs 64 --
 ```bash
 python legged_gym/legged_gym/scripts/eval/eval_ground.py --task g1_wall --checkpoint_path legged_gym/logs/g1_ground/Jul27_13-40-19_test_g1/model_12000.pt
 ```
+
+
+
 ### 动作收集
 ```bash
 python legged_gym/legged_gym/scripts/visualization/motion_collection.py --task g1_wall --checkpoint_path legged_gym/logs/g1_ground/Jul27_13-40-19_test_g1/model_12000.pt 

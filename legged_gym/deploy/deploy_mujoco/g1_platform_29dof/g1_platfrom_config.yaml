@@ -19,26 +19,28 @@ observation_scales:
 
 control:
   control_type: 'P'
-  action_scale: 0.25
+  action_scale: 0.35
   # 27dof关节顺序: 左腿(6) + 右腿(6) + 腰部(1) + 左臂(4) + 左手腕(3) + 右臂(4) + 右手腕(3)
   kp: [150, 150, 150, 200, 40, 40,     # 左腿
        150, 150, 150, 200, 40, 40,     # 右腿
        100,                            # 腰部
        100, 100, 100, 100,        # 左臂
-       40, 40, 40,                     # 左手腕 (降低增益减少晃动)
+       100, 100, 100,                     # 左手腕 (降低增益减少晃动)
        100, 100, 100, 100,             # 右臂 (4个关节)
-       40, 40, 40]                     # 右手腕 (降低增益减少晃动)
+       100, 100, 100]                     # 右手腕 (降低增益减少晃动)
 
   kd: [4, 4, 4, 6, 2, 2,              # 左腿
        4, 4, 4, 6, 2, 2,              # 右腿
        4,                             # 腰部
        4, 4, 4, 4,                    # 左臂 (4个关节)
-       6, 6, 6,                       # 左手腕 (增加阻尼减少振荡)
+       4, 4, 4,                       # 左手腕 (增加阻尼减少振荡)
        4, 4, 4, 4,                    # 右臂 
-       6, 6, 6]                       # 右手腕 (增加阻尼减少振荡)
+       4, 4, 4]                       # 右手腕 (增加阻尼减少振荡)
 
 model:
-  default_model_path: "/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_platform/models/policy_g1_platform_12000.onnx"
+  default_model_path: "/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_platform_29dof/models/policy_g1_platform_12000.onnx"
+
+  #default_model_path: "/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_platform_29dof/models/policy_g1_platform_12500.onnx"
 
 initial_pose:
   position: [-0.5, 0.0, 0.5]  # x, y, z坐标

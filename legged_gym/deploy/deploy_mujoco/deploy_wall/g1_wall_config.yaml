@@ -1,0 +1,50 @@
+# G1地面部署配置
+simulation:
+  xml_path: "/home/shenlan/HoST/legged_gym/resources/robots/g1/g1_23dof_ground_wall.xml"
+  simulation_dt: 0.002
+  control_decimation: 10
+
+robot:
+  num_joints: 23
+  
+observations:
+  num_single_obs: 76      # 单步观测维度
+  history_length: 6       # 历史步数
+  total_obs_dim: 456      # 总维度: 76 * 6
+  
+observation_scales:
+  ang_vel: 0.25
+  dof_pos: 1.0
+  dof_vel: 0.05
+
+control:
+  control_type: 'P'
+  action_scale: 0.25
+  # 关节顺序: 左腿(6) + 右腿(6) + 腰部(1) + 左臂(5) + 右臂(5)
+  kp: [150, 150, 150, 230, 40, 40,
+       150, 150, 150, 230, 40, 40,
+       100,
+       100, 100, 100, 100, 100,
+       100, 100, 100, 100, 100]
+
+  kd: [4, 4, 4, 6, 2, 2,
+       4, 4, 4, 6, 2, 2,
+       4, 
+       4, 4, 4, 4, 4,
+       4, 4, 4, 4, 4]
+
+model:
+  default_model_path: "/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/deploy_wall/models/policy_g1_wall_11000.onnx"
+
+initial_pose:
+  # 让G1坐在地面上，背部靠着立方体
+  position: [0.20, 0.0, 0.4]  # x, y, z
+  orientation: [1.0, 0.0, 0.0, 0.0]  # w, x, y, z（单位四元数，面向+x）
+  # 关节顺序: 左腿(6) + 右腿(6) + 腰部(1) + 左臂(5) + 右臂(5)
+  joint_angles: [
+    -1.7, 0.0, 0.0, 0.0, 0.0, 0.0,  # 左腿：屈髋、屈膝、轻跖屈
+    -1.7, 0.0, 0.0, 0.0, 0.0, 0.0,  # 右腿
+    0.0,                             # 腰部
+    0.2, 0.0, 0.0, 0.5, 0.0,         # 左臂：轻微前举与屈肘
+    0.2, 0.0, 0.0, 0.5, 0.0          # 右臂
+  ]
