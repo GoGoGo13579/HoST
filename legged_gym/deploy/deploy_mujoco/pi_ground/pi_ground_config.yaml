@@ -1,0 +1,69 @@
+# Pi 地面部署配置 (MuJoCo)
+simulation:
+  # TODO: 替换为Pi的MuJoCo可解析模型（推荐转换后的MJCF XML）
+  # 绝对路径（已由脚本生成）
+  xml_path: "/home/shenlan/zzy_ws/HoST/legged_gym/resources/robots/pi_12dof/urdf/pi_12dof_ground.xml"
+  simulation_dt: 0.002
+  control_decimation: 10
+
+robot:
+  num_joints: 12
+
+observations:
+  num_single_obs: 43     # 3(ang_vel)+3(gravity)+12(q)+12(dq)+12(last_actions)+1(action_rescale)
+  history_length: 6
+  total_obs_dim: 258     # 43 * 6
+
+observation_scales:
+  ang_vel: 0.25
+  dof_pos: 1.0
+  dof_vel: 0.05
+
+control:
+  control_type: 'P'
+  action_scale: 0.3
+
+  # 训练时的配置
+  # kp: [30, 15, 15, 30, 12, 5,
+  #     30, 15, 15, 30, 12, 5]
+  # kd: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2,
+  #     0.2, 0.2, 0.2, 0.2, 0.2, 0.2]
+  tau_limit: 60.0
+
+  # kp/kd 顺序需与MuJoCo中12个关节顺序一致
+  kp: [40, 15, 15, 40, 16, 5,
+       40, 15, 15, 40, 16, 5]
+  kd: [0.4, 0.8, 0.8, 0.8, 1.2, 0.4,
+       0.4, 0.8, 0.8, 0.8, 1.2, 0.4]
+
+  # kp增加百分之10,kd不变
+  # kp: [44, 22, 16.5, 44, 17.6, 5.5,
+  #      44, 22, 16.5, 44, 17.6, 5.5]
+  # kd: [0.4, 0.8, 0.8, 0.8, 1.2, 0.4,
+  #      0.4, 0.8, 0.8, 0.8, 1.2, 0.4]
+
+  # # kp增加百分之20,kd不变
+  # kp: [48, 24, 18, 48, 19.2, 6,
+  #      48, 24, 18, 48, 19.2, 6]
+  # kd: [0.4, 0.8, 0.8, 0.8, 1.2, 0.4,
+  #      0.4, 0.8, 0.8, 0.8, 1.2, 0.4]
+       
+
+model:
+  # TODO: 替换为Pi地面任务的ONNX策略
+  # 相对路径：相对于本配置文件所在目录
+  # default_model_path: "model/policy_pi_ground_20300.onnx"
+  default_model_path: "model/policy_pi_ground_30000.onnx"
+  # default_model_path: "model/policy_pi_ground_49700.onnx"
+  # default_model_path: "model/policy_pi_ground_40000.onnx"
+
+initial_pose:
+  position: [0.0, 0.0, 0.5]
+  # 四元数[w,x,y,z]，需与模拟器一致
+  orientation: [0.7071, 0.0, -0.7071, 0.0]
+  # 与MuJoCo中关节顺序完全一致的12维初始角度
+  joint_angles: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+
+

@@ -1,6 +1,6 @@
 # G1地面部署配置
 simulation:
-  xml_path: "/home/shenlan/HoST/legged_gym/resources/robots/g1/g1_23dof_ground.xml"
+  xml_path: "/home/shenlan/zzy_ws/HoST/legged_gym/resources/robots/g1/g1_23dof_ground.xml"
   simulation_dt: 0.002
   control_decimation: 10
 
@@ -36,7 +36,7 @@ control:
 model:
   #default_model_path: "/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_ground_prone/models/policy_g1_ground_prone_12500.onnx"
 
-  default_model_path: "/home/shenlan/HoST/legged_gym/deploy/deploy_mujoco/g1_platform/models/policy_g1_platform_12000_3.onnx"
+  default_model_path: "/home/shenlan/zzy_ws/HoST/legged_gym/deploy/deploy_mujoco/g1_platform/models/policy_g1_platform_12000_3.onnx"
 initial_pose:
   position: [0.0, 0.0, 0.5]  # x, y, z坐标
   orientation: [1.0, 0.0, 1.0, 0.0]  # w, x, y, z四元数（俯卧）
